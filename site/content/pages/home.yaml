@@ -1,0 +1,25 @@
+id: home
+title: Home
+hero:
+  heading: "research"
+  subheading: "CLI research via claude.ai"
+  body: "fire research prompts at claude.ai through playwriter, wait for completion, download the results. CLI for deep-research workflows."
+  badges:
+    - { label: "cli" }
+    - { label: "research" }
+    - { label: "playwright" }
+    - { label: "tooling" }
+  ctas:
+    - { label: "GitHub", href: "https://github.com/AnEntrypoint/research", primary: true }
+    - { label: "247420", href: "https://247420.xyz" }
+features:
+  heading: "Why research"
+  items:
+    - { name: "cli", desc: "flagship trait of research." }
+    - { name: "research", desc: "core capability of research." }
+    - { name: "playwright", desc: "core capability of research." }
+quickstart:
+  heading: Quick start
+  lines:
+    - { kind: "cmt", text: "# source" }
+    - { kind: "cmd", text: "git clone https://github.com/AnEntrypoint/research.git" }

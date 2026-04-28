@@ -1,0 +1,17 @@
+title: "research"
+tagline: "CLI research via claude.ai"
+description: "fire research prompts at claude.ai through playwriter, wait for completion, download the results. CLI for deep-research workflows."
+repo: "https://github.com/AnEntrypoint/research"
+url: "https://anentrypoint.github.io/research"
+year: 2026
+keywords:
+  - "cli"
+  - "research"
+  - "playwright"
+  - "247420"
+  - "anentrypoint"
+accent_from: "#ffa657"
+accent_to: "#f0883e"
+glyph: "⌘"
+code: "053"
+category: "tooling"
