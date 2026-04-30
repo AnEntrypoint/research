@@ -64,17 +64,22 @@ async function createConversation(model) {
   return (await res.json()).uuid;
 }
 
-async function sendCompletion(convId, { prompt, model, humanMessageUuid, assistantMessageUuid, onDelta } = {}) {
-  const payload = JSON.stringify({
+const STYLE_NORMAL = { type: 'default', key: 'Default', name: 'Normal', nameKey: 'normal_style_name', prompt: 'Normal\n', summary: 'Default responses from Claude', summaryKey: 'normal_style_summary', isDefault: true };
+const STYLE_CONCISE = { type: 'default', key: 'Concise', name: 'Concise', nameKey: 'concise_style_name', prompt: 'Concise\n', summary: 'Shorter responses without sacrificing accuracy', summaryKey: 'concise_style_summary', isDefault: true };
+
+async function sendCompletion(convId, { prompt, model, humanMessageUuid, assistantMessageUuid, onDelta, style, tools, paprikaMode } = {}) {
+  const payloadObj = {
     prompt, timezone: 'Africa/Johannesburg', locale: 'en-US', model,
-    personalized_styles: [{ type: 'default', key: 'Default', name: 'Normal', nameKey: 'normal_style_name', prompt: 'Normal\n', summary: 'Default responses from Claude', summaryKey: 'normal_style_summary', isDefault: true }],
-    tools: [{ type: 'web_search_v0', name: 'web_search' }],
+    personalized_styles: [style || STYLE_NORMAL],
+    tools: tools !== undefined ? tools : [{ type: 'web_search_v0', name: 'web_search' }],
     turn_message_uuids: { human_message_uuid: humanMessageUuid, assistant_message_uuid: assistantMessageUuid },
     attachments: [], files: [], sync_sources: [], rendering_mode: 'messages',
-  });
+  };
+  const payload = JSON.stringify(payloadObj);
 
   const s = await getSession();
-  const res = await s.post(`${BASE}/api/organizations/${ORG_ID}/chat_conversations/${convId}/completion`, {
+  const qs = paprikaMode ? `?paprika_mode=${encodeURIComponent(paprikaMode)}` : '';
+  const res = await s.post(`${BASE}/api/organizations/${ORG_ID}/chat_conversations/${convId}/completion${qs}`, {
     headers: { ...BASE_HEADERS, 'accept': 'text/event-stream' },
     body: payload,
   });
@@ -110,4 +115,4 @@ async function listConversations(limit = 20) {
   return res.json();
 }
 
-module.exports = { request, createConversation, sendCompletion, getConversation, listConversations, ORG_ID, creds };
+module.exports = { request, createConversation, sendCompletion, getConversation, listConversations, ORG_ID, creds, STYLE_NORMAL, STYLE_CONCISE };
