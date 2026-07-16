@@ -9,6 +9,7 @@
   },
   "bin": {
     "research": "./research.js",
+    "research-from-repo": "./research-from-repo.js",
     "retrieve": "./retrieve.js",
     "refresh-auth": "./refresh-auth.js",
     "gemini-image": "./gemini-image.js",
@@ -16,6 +17,7 @@
   },
   "scripts": {
     "research": "bun research.js",
+    "research-from-repo": "bun research-from-repo.js",
     "retrieve": "bun retrieve.js",
     "refresh-auth": "bun refresh-auth.js",
     "gemini-image": "bun gemini-image.js",

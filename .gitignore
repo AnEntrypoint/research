@@ -33,3 +33,8 @@ jobs-test.json
 dist/
 .codeinsight/
 rs-learn.db
+.gm/pw-sock-*/
+package-lock.json
+rewrite-out/
+rewrite-docx/
+config.bat

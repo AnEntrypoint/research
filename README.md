@@ -1,9 +1,10 @@
 # research
 
-Two CLI flows over direct HTTP, sharing the playwriter-extracted browser cookies:
+Three CLI flows over direct HTTP, sharing the playwriter-extracted browser cookies:
 
 1. **`research.js`** — fire a single Haiku prompt at claude.ai and stream the answer.
-2. **`gemini-image.js`** — generate an image via gemini.google.com and save it as PNG.
+2. **`research-from-repo.js`** — ingest one or more GitHub repos via gitingest.com and feed the combined digest into fable (rewrite.js's concise, no-tools completion mode).
+3. **`gemini-image.js`** — generate an image via gemini.google.com and save it as PNG.
 
 ## Requirements
 
@@ -24,6 +25,18 @@ Optional env:
 - `THINK_BUDGET` — extended thinking tokens, default `10000` (set `0` to disable)
 
 Re-run `bun refresh-auth.js` whenever you see 401/403.
+
+## Repo-to-fable (gitingest + rewrite)
+
+Ingests one or more repos through [gitingest.com](https://gitingest.com) (same fetch logic as `gitingest-batch.mjs`, shared via `gitingest-lib.mjs`) and sends the combined digest straight into fable — `rewrite.js`'s concise + thinking, no-tools completion mode — instead of a manual `--file` prompt.
+
+```sh
+bun research-from-repo.js https://github.com/octocat/Hello-World
+bun research-from-repo.js https://github.com/octocat/Hello-World https://github.com/octocat/Spoon-Knife --prompt "Compare these two repos"
+bun research-from-repo.js https://github.com/octocat/Hello-World --file instructions.txt
+```
+
+`gitingest-batch.mjs` still works standalone (`node gitingest-batch.mjs [-o combined.md] <repo-url> ...`) for saving raw digests to disk without invoking fable.
 
 ## Gemini image generation
 
