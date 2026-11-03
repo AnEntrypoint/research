@@ -1,7 +1,7 @@
 {
   "name": "@anentrypoint/research",
   "version": "1.0.0",
-  "description": "CLI tools for claude.ai research prompts and gemini.google.com image generation via direct HTTP",
+  "description": "CLI tools for claude.ai research prompts, gitingest-based repo research, and Gemini image generation in the local browser (playwriter)",
   "type": "commonjs",
   "engines": {
     "bun": ">=1.0",
@@ -12,16 +12,14 @@
     "research-from-repo": "./research-from-repo.js",
     "retrieve": "./retrieve.js",
     "refresh-auth": "./refresh-auth.js",
-    "gemini-image": "./gemini-image.js",
-    "refresh-gemini-auth": "./refresh-gemini-auth.js"
+    "gemini-image": "./gemini-image.js"
   },
   "scripts": {
     "research": "bun research.js",
     "research-from-repo": "bun research-from-repo.js",
     "retrieve": "bun retrieve.js",
     "refresh-auth": "bun refresh-auth.js",
-    "gemini-image": "bun gemini-image.js",
-    "refresh-gemini-auth": "bun refresh-gemini-auth.js"
+    "gemini-image": "bun gemini-image.js"
   },
   "keywords": [
     "claude",
