@@ -1,10 +1,11 @@
 # research
 
-Three CLI flows. All three use direct HTTP; the claude.ai and Gemini flows replay session cookies copied from the playwriter-connected browser over curl-impersonate (cuimp):
+Four CLI flows. All use direct HTTP over curl-impersonate (cuimp); the claude.ai and Gemini flows replay session cookies copied from the playwriter-connected browser:
 
 1. **`research.js`** — fire a single Haiku prompt at claude.ai and stream the answer.
 2. **`research-from-repo.js`** — ingest one or more GitHub repos via gitingest.com and feed the combined digest into fable (rewrite.js's concise, no-tools completion mode).
 3. **`gemini-image.js`** — generate an image on gemini.google.com over cuimp and save it as PNG.
+4. **`gemini-transcribe.js`** — transcribe an audio file through the Gemini API over cuimp.
 
 ## Requirements
 
@@ -65,7 +66,13 @@ GEMINI_COOKIE='__Secure-1PSID=...; __Secure-1PSIDTS=...' bun gemini-image.js "a 
 
 Re-run `refresh-gemini-auth.js` when the CLI reports stale cookies. Options: `--creds <file>`, `--browser-version <v>` (default 145), `--curl-impersonate <path>`, `--proxy <url>`, `--timeout <ms>`, `--debug`.
 
-The HTTP logic lives in `gemini-client.mjs`; `gemini-client.test.mjs` covers frame parsing, image extraction and the full request→download pipeline. If the web API changes, `bun gemini-image.js "..." --browser` falls back to driving the playwriter browser through `gemini-browser.mjs`.
+The HTTP logic lives in `gemini-client.mjs`; `gemini-client.test.mjs` covers frame parsing, image extraction and the full request→download pipeline. `gemini-browser.mjs` is used only by `refresh-gemini-auth.js`, to capture cookies; every Gemini request then goes through cuimp.
+
+## Gemini transcription
+
+```sh
+bun gemini-transcribe.js talk.mp3 -o talk.txt     # API key from gemini-creds.json, uploaded over cuimp
+```
 
 ## creds files
 

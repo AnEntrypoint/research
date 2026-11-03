@@ -1,7 +1,4 @@
 #!/usr/bin/env -S bun --bun
-// Transcribe audio via Gemini API (gemini-1.5-flash).
-// Usage: bun gemini-transcribe.js <audio-file> [-o out.txt]
-// API key comes from gemini-creds.json.
 
 const fs = require('fs');
 const path = require('path');
@@ -32,88 +29,87 @@ const MIME_MAP = {
     '.webm': 'audio/webm',
     '.aac': 'audio/aac',
 };
-const ext = path.extname(audioFile).toLowerCase();
-const mimeType = MIME_MAP[ext] || 'audio/mpeg';
-
+const mimeType = MIME_MAP[path.extname(audioFile).toLowerCase()] || 'audio/mpeg';
 const API_KEY = creds.apiKey;
 const MODEL = 'gemini-1.5-flash';
+const TIMEOUT_MS = 240000;
 
-async function uploadFile(filePath, mime) {
-    const bytes = fs.readFileSync(filePath);
-    const size = bytes.length;
+const textOf = (response) => (response.rawBody || Buffer.alloc(0)).toString('utf8');
+
+async function uploadFile(http, filePath, mime) {
+    const size = fs.statSync(filePath).size;
     console.error(`Uploading ${path.basename(filePath)} (${size} bytes, ${mime})...`);
-
-    // Resumable upload initiation
-    const initRes = await fetch(
-        `https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=resumable&key=${API_KEY}`,
-        {
-            method: 'POST',
-            headers: {
-                'X-Goog-Upload-Protocol': 'resumable',
-                'X-Goog-Upload-Command': 'start',
-                'X-Goog-Upload-Header-Content-Length': String(size),
-                'X-Goog-Upload-Header-Content-Type': mime,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ file: { display_name: path.basename(filePath) } }),
-        }
-    );
-    if (!initRes.ok) throw new Error(`Upload init ${initRes.status}: ${await initRes.text()}`);
-    const uploadUrl = initRes.headers.get('x-goog-upload-url');
-    if (!uploadUrl) throw new Error('No upload URL returned');
-
-    // Upload bytes
-    const uploadRes = await fetch(uploadUrl, {
+    const init = await http.request({
+        url: `https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=resumable&key=${API_KEY}`,
         method: 'POST',
         headers: {
-            'Content-Length': String(size),
+            'X-Goog-Upload-Protocol': 'resumable',
+            'X-Goog-Upload-Command': 'start',
+            'X-Goog-Upload-Header-Content-Length': String(size),
+            'X-Goog-Upload-Header-Content-Type': mime,
+            'Content-Type': 'application/json',
+        },
+        data: JSON.stringify({ file: { display_name: path.basename(filePath) } }),
+        timeout: TIMEOUT_MS,
+    });
+    if (init.status >= 400) throw new Error(`Upload init ${init.status}: ${textOf(init)}`);
+    const uploadUrl = init.headers['x-goog-upload-url'];
+    if (!uploadUrl) throw new Error('No upload URL returned');
+    const upload = await http.request({
+        url: uploadUrl,
+        method: 'POST',
+        headers: {
             'X-Goog-Upload-Offset': '0',
             'X-Goog-Upload-Command': 'upload, finalize',
         },
-        body: bytes,
+        extraCurlArgs: ['--data-binary', `@${filePath}`],
+        timeout: TIMEOUT_MS,
     });
-    if (!uploadRes.ok) throw new Error(`Upload ${uploadRes.status}: ${await uploadRes.text()}`);
-    const data = await uploadRes.json();
-    const fileUri = data.file?.uri;
+    if (upload.status >= 400) throw new Error(`Upload ${upload.status}: ${textOf(upload)}`);
+    const fileUri = JSON.parse(textOf(upload)).file?.uri;
     if (!fileUri) throw new Error('No file URI in upload response');
     console.error(`Uploaded: ${fileUri}`);
     return fileUri;
 }
 
-async function transcribe(fileUri, mime) {
+async function transcribe(http, fileUri, mime) {
     console.error('Requesting transcription...');
-    const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [
-                        { file_data: { mime_type: mime, file_uri: fileUri } },
-                        { text: 'Please transcribe this audio exactly. Return only the transcription text, no commentary.' },
-                    ]
-                }]
-            }),
-        }
-    );
-    if (!res.ok) throw new Error(`generateContent ${res.status}: ${await res.text()}`);
-    const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error(`No text in response: ${JSON.stringify(data).slice(0, 400)}`);
+    const response = await http.request({
+        url: `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        data: JSON.stringify({
+            contents: [{
+                parts: [
+                    { file_data: { mime_type: mime, file_uri: fileUri } },
+                    { text: 'Please transcribe this audio exactly. Return only the transcription text, no commentary.' },
+                ],
+            }],
+        }),
+        timeout: TIMEOUT_MS,
+    });
+    if (response.status >= 400) throw new Error(`generateContent ${response.status}: ${textOf(response)}`);
+    const text = JSON.parse(textOf(response)).candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error(`No text in response: ${textOf(response).slice(0, 400)}`);
     return text;
 }
 
 (async () => {
-    const fileUri = await uploadFile(audioFile, mimeType);
-    const transcription = await transcribe(fileUri, mimeType);
-    if (outPath) {
-        fs.writeFileSync(outPath, transcription, 'utf8');
-        console.error(`Saved: ${outPath}`);
-    } else {
-        console.log(transcription);
+    const { createGeminiHttp } = await import('./gemini-client.mjs');
+    const http = createGeminiHttp();
+    try {
+        const fileUri = await uploadFile(http, audioFile, mimeType);
+        const transcription = await transcribe(http, fileUri, mimeType);
+        if (outPath) {
+            fs.writeFileSync(outPath, transcription, 'utf8');
+            console.error(`Saved: ${outPath}`);
+        } else {
+            console.log(transcription);
+        }
+    } finally {
+        http.destroy?.();
     }
-})().catch(e => {
+})().catch((e) => {
     console.error('Error:', e.message);
     process.exit(1);
 });

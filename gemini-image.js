@@ -1,12 +1,9 @@
 #!/usr/bin/env -S bun --bun
-// Generate an image on gemini.google.com over curl-impersonate (cuimp) and save it as PNG.
-// Usage: bun gemini-image.js "an oil painting of a frog astronaut" [-o out.png]
-// Cookies come from gemini-creds.json (refresh with: bun refresh-gemini-auth.js), or GEMINI_COOKIE.
 
 const path = require('path');
 
 const args = process.argv.slice(2);
-const options = { outPath: null, credsPath: path.join(__dirname, 'gemini-creds.json'), browser: false, http: {} };
+const options = { outPath: null, credsPath: path.join(__dirname, 'gemini-creds.json'), check: false, http: {} };
 const valueFlags = new Set(['-o', '--out', '--creds', '--browser-version', '--curl-impersonate', '--proxy', '--timeout']);
 const words = [];
 for (let i = 0; i < args.length; i += 1) {
@@ -21,28 +18,21 @@ for (let i = 0; i < args.length; i += 1) {
         else if (arg === '--timeout') options.http.timeoutMs = Number(value);
         continue;
     }
-    if (arg === '--browser') { options.browser = true; continue; }
     if (arg === '--debug') { options.http.debug = true; continue; }
     if (arg === '--check') { options.check = true; continue; }
     if (arg === '-h' || arg === '--help') {
-        console.log('Usage: bun gemini-image.js "<prompt>" [-o out.png] [--creds file] [--browser] [--check]');
+        console.log('Usage: bun gemini-image.js "<prompt>" [-o out.png] [--creds file] [--check]');
         process.exit(0);
     }
     words.push(arg);
 }
 const prompt = words.join(' ').trim();
 if (!prompt && !options.check) {
-    console.error('Usage: bun gemini-image.js "<prompt>" [-o out.png] [--creds file] [--browser] [--check]');
+    console.error('Usage: bun gemini-image.js "<prompt>" [-o out.png] [--creds file] [--check]');
     process.exit(1);
 }
 
 const run = async () => {
-    if (options.browser) {
-        const { runInBrowser } = require('./browser-run.js');
-        const dest = path.resolve(options.outPath || `gemini-image-${Date.now()}.png`);
-        const result = runInBrowser(path.join(__dirname, 'gemini-browser.mjs'), 'generateGeminiImage', { prompt, outPath: dest });
-        return result;
-    }
     const client = await import('./gemini-client.mjs');
     if (options.check) {
         const session = await client.checkGeminiSession({ credsPath: options.credsPath, ...options.http });

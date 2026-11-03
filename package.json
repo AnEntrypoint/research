@@ -13,7 +13,8 @@
     "retrieve": "./retrieve.js",
     "refresh-auth": "./refresh-auth.js",
     "refresh-gemini-auth": "./refresh-gemini-auth.js",
-    "gemini-image": "./gemini-image.js"
+    "gemini-image": "./gemini-image.js",
+    "gemini-transcribe": "./gemini-transcribe.js"
   },
   "scripts": {
     "research": "bun research.js",
@@ -22,7 +23,8 @@
     "refresh-auth": "bun refresh-auth.js",
     "refresh-gemini-auth": "bun refresh-gemini-auth.js",
     "gemini-image": "bun gemini-image.js",
-    "test": "node --test gemini-client.test.mjs"
+    "gemini-transcribe": "bun gemini-transcribe.js",
+    "test": "node --test gemini-client.test.mjs browser-run.test.mjs"
   },
   "keywords": [
     "claude",
