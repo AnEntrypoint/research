@@ -72,6 +72,11 @@ test('buildInnerRequest produces the current 99-field shape', () => {
     assert.equal(inner[98], 1);
 });
 
+test('buildInnerRequest starts a new chat with empty conversation metadata', () => {
+    const inner = buildInnerRequest('x', 'en', { uuid: 'A' });
+    assert.deepEqual(inner[2], ['', '', '', null, null, null, null, null, null, '']);
+});
+
 test('buildInnerRequest generates a unique fake context token by default', () => {
     const a = buildInnerRequest('x', 'en', { uuid: 'A' });
     const b = buildInnerRequest('x', 'en', { uuid: 'B' });

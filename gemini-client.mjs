@@ -101,6 +101,7 @@ export function buildInnerRequest(prompt, hl = 'en', { uuid = randomUUID().toUpp
     const inner = new Array(99).fill(null);
     inner[0] = [prompt, 0, null, null, null, null, 0];
     inner[1] = [hl];
+    inner[2] = ['', '', '', null, null, null, null, null, null, ''];
     inner[3] = context ?? '!' + randomBytes(1200 + Math.floor(Math.random() * 400)).toString('base64url');
     inner[4] = randomBytes(16).toString('hex');
     inner[6] = [0];
