@@ -3,6 +3,8 @@ gemini-creds.json
 *.png
 .last-run
 .plugkit-browser-profile/
+.playwriter/
+runs/
 node_modules/
 
 results/

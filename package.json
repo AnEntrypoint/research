@@ -1,7 +1,7 @@
 {
   "name": "@anentrypoint/research",
-  "version": "1.0.0",
-  "description": "CLI tools for claude.ai research prompts, gitingest-based repo research, and Gemini image generation in the local browser (playwriter)",
+  "version": "1.1.0",
+  "description": "CLI tools for claude.ai research prompts, gitingest-based repo research, and Gemini image generation over curl-impersonate (cuimp)",
   "type": "commonjs",
   "engines": {
     "bun": ">=1.0",
@@ -12,6 +12,7 @@
     "research-from-repo": "./research-from-repo.js",
     "retrieve": "./retrieve.js",
     "refresh-auth": "./refresh-auth.js",
+    "refresh-gemini-auth": "./refresh-gemini-auth.js",
     "gemini-image": "./gemini-image.js"
   },
   "scripts": {
@@ -19,7 +20,9 @@
     "research-from-repo": "bun research-from-repo.js",
     "retrieve": "bun retrieve.js",
     "refresh-auth": "bun refresh-auth.js",
-    "gemini-image": "bun gemini-image.js"
+    "refresh-gemini-auth": "bun refresh-gemini-auth.js",
+    "gemini-image": "bun gemini-image.js",
+    "test": "node --test gemini-client.test.mjs"
   },
   "keywords": [
     "claude",
@@ -27,10 +30,13 @@
     "ai",
     "research",
     "image-generation",
+    "cuimp",
+    "curl-impersonate",
     "cli"
   ],
   "license": "MIT",
   "dependencies": {
+    "cuimp": "^2.1.1",
     "node-tls-client": "^2.1.0"
   },
   "trustedDependencies": [

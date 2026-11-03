@@ -1,16 +1,16 @@
 # research
 
-Three CLI flows. The claude.ai and gitingest flows use direct HTTP with cookies copied from the playwriter-connected browser. The Gemini flow drives that browser directly:
+Three CLI flows. All three use direct HTTP; the claude.ai and Gemini flows replay session cookies copied from the playwriter-connected browser over curl-impersonate (cuimp):
 
 1. **`research.js`** — fire a single Haiku prompt at claude.ai and stream the answer.
 2. **`research-from-repo.js`** — ingest one or more GitHub repos via gitingest.com and feed the combined digest into fable (rewrite.js's concise, no-tools completion mode).
-3. **`gemini-image.js`** — generate an image on gemini.google.com in the local browser and save it as PNG.
+3. **`gemini-image.js`** — generate an image on gemini.google.com over cuimp and save it as PNG.
 
 ## Requirements
 
 - [Bun](https://bun.sh) or Node.js ≥18
 - Chrome with the [playwriter extension](https://github.com/remorses/playwriter) active, and the `playwriter` CLI on PATH (`npm i -g playwriter`).
-- Signed in to the relevant site in that Chrome: `claude.ai` for the first and second flows, `gemini.google.com` for the third.
+- Signed in to the relevant site in that Chrome: `claude.ai` for the first and second flows, and `gemini.google.com` when refreshing Gemini cookies (only needed once; `GEMINI_COOKIE` avoids the browser entirely).
 
 ## Claude.ai research
 
@@ -41,11 +41,13 @@ bun research-from-repo.js https://github.com/octocat/Hello-World --file instruct
 
 ## Gemini image generation
 
-No cookies to extract or refresh: the prompt is typed into the gemini.google.com tab of the playwriter browser, and the generated image is downloaded from that page.
+Direct HTTP over curl-impersonate (cuimp) — the browser is only needed once, to capture the session cookies:
 
 ```sh
+bun refresh-gemini-auth.js                                        # capture gemini.google.com cookies → gemini-creds.json
 bun gemini-image.js "an oil painting of a frog astronaut"
 bun gemini-image.js "a cyberpunk city" -o city.png
+bun gemini-image.js --check                                       # verify the stored session
 ```
 
 Atomic CLI — prints the absolute output path on stdout (status goes to stderr), so it pipes:
@@ -55,8 +57,16 @@ IMG=$(bun gemini-image.js "a red sports car")
 open "$IMG"
 ```
 
-The browser logic lives in `gemini-browser.mjs`, which an agent can also load directly through `playwriter` execute: `const { generateGeminiImage } = await import('<abs path>/gemini-browser.mjs')`. If Gemini says it is signed out, sign in at gemini.google.com in that Chrome and re-run. Gemini's page layout can change; the selectors are all in `gemini-browser.mjs`.
+Set `GEMINI_COOKIE` to skip both the browser and the creds file (e.g. in CI):
+
+```sh
+GEMINI_COOKIE='__Secure-1PSID=...; __Secure-1PSIDTS=...' bun gemini-image.js "a red sports car"
+```
+
+Re-run `refresh-gemini-auth.js` when the CLI reports stale cookies. Options: `--creds <file>`, `--browser-version <v>` (default 145), `--curl-impersonate <path>`, `--proxy <url>`, `--timeout <ms>`, `--debug`.
+
+The HTTP logic lives in `gemini-client.mjs`; `gemini-client.test.mjs` covers frame parsing, image extraction and the full request→download pipeline. If the web API changes, `bun gemini-image.js "..." --browser` falls back to driving the playwriter browser through `gemini-browser.mjs`.
 
 ## creds files
 
-`creds.json` (claude.ai session cookies) and `gemini-creds.json` (Gemini API key for `gemini-transcribe.js`) are gitignored. Never commit them.
+`creds.json` (claude.ai session cookies) and `gemini-creds.json` (Gemini web session cookies for `gemini-image.js`, and optionally the API key for `gemini-transcribe.js`) are gitignored. Never commit them.

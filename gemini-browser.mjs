@@ -25,6 +25,28 @@ async function findOrOpenGeminiPage(context) {
     return page;
 }
 
+export async function captureGeminiCreds({ context, credsPath }) {
+    const page = await findOrOpenGeminiPage(context);
+    const cookies = await context.cookies('https://gemini.google.com');
+    const value = (name) => cookies.find((cookie) => cookie.name === name)?.value;
+    if (!value('__Secure-1PSID')) {
+        throw new Error('Not signed in to gemini.google.com in this browser. Sign in at gemini.google.com in the playwriter-connected Chrome, then re-run.');
+    }
+    let existing = {};
+    try {
+        existing = JSON.parse(await fs.readFile(credsPath, 'utf8'));
+    } catch {}
+    const creds = {
+        ...existing,
+        secure1psid: value('__Secure-1PSID'),
+        secure1psidts: value('__Secure-1PSIDTS'),
+        userAgent: await page.evaluate(() => navigator.userAgent),
+        fullCookie: cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join('; '),
+    };
+    await fs.writeFile(credsPath, JSON.stringify(creds, null, 2));
+    return { path: credsPath, cookies: cookies.length, hasPSIDTS: Boolean(creds.secure1psidts) };
+}
+
 async function promptBox(page) {
     const signIn = page.getByRole('button', { name: 'Sign in' }).first();
     const box = page.getByRole('textbox', { name: /enter a prompt/i }).first();
