@@ -8,6 +8,8 @@ import path from 'node:path';
 const GEMINI_APP_URL = 'https://gemini.google.com/app';
 const IMAGE_MIN_WIDTH = 256;
 const GENERATE_TIMEOUT_MS = 240000;
+const NO_IMAGE_GRACE_MS = 90000;
+const SETTLE_POLLS = 3;
 const PROMPT_TIMEOUT_MS = 20000;
 const SIGNED_OUT_GRACE_MS = 1500;
 const POLL_MS = 1000;
@@ -47,11 +49,18 @@ function generatedImageSrcs(page) {
 
 async function waitForNewImage(page, before) {
     const deadline = Date.now() + GENERATE_TIMEOUT_MS;
+    let lastText = null;
+    let stablePolls = 0;
     while (Date.now() < deadline) {
         await sleep(POLL_MS);
         const fresh = (await generatedImageSrcs(page)).filter(src => !before.has(src));
-        const generating = await isVisible(page.getByRole('button', { name: /stop response/i }).first());
-        if (fresh.length && !generating) return fresh[0];
+        const text = await page.locator('main').innerText().catch(() => '');
+        stablePolls = text === lastText ? stablePolls + 1 : 0;
+        lastText = text;
+        if (fresh.length && stablePolls >= SETTLE_POLLS) return fresh[0];
+        if (!fresh.length && stablePolls * POLL_MS >= NO_IMAGE_GRACE_MS) {
+            throw new Error(`Gemini answered without an image. Page ends: ${JSON.stringify(text.slice(-300))}`);
+        }
     }
     throw new Error('Timed out waiting for Gemini to finish an image');
 }
