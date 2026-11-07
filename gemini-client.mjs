@@ -101,7 +101,6 @@ export function buildInnerRequest(prompt, hl = 'en', { uuid = randomUUID().toUpp
     const inner = new Array(99).fill(null);
     inner[0] = [prompt, 0, null, null, null, null, 0];
     inner[1] = [hl];
-    inner[2] = ['', '', '', null, null, null, null, null, null, ''];
     inner[3] = context ?? '!' + randomBytes(1200 + Math.floor(Math.random() * 400)).toString('base64url');
     inner[4] = randomBytes(16).toString('hex');
     inner[6] = [0];
@@ -294,7 +293,7 @@ export async function generateGeminiImage({
                 referer: 'https://gemini.google.com/',
                 'content-type': 'application/x-www-form-urlencoded;charset=utf-8',
                 'x-same-domain': '1',
-                'x-goog-ext-525001261-jspb': buildModelHeader({ hl: token.hl }),
+                'x-goog-ext-525001261-jspb': buildModelHeader({ hl: token.hl, sessionId: token.sid || undefined }),
                 'x-goog-ext-73010989-jspb': '[0]',
                 'x-goog-ext-73010990-jspb': '[0,0,0]',
                 'x-goog-ext-525005358-jspb': JSON.stringify([uuid, 1]),

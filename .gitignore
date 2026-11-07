@@ -40,3 +40,9 @@ package-lock.json
 rewrite-out/
 rewrite-docx/
 config.bat
+.env
+.env.*
+.agentplug-kv/
+.agentplug/
+__pycache__/
+*.pyc

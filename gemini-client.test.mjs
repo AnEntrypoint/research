@@ -72,9 +72,9 @@ test('buildInnerRequest produces the current 99-field shape', () => {
     assert.equal(inner[98], 1);
 });
 
-test('buildInnerRequest starts a new chat with empty conversation metadata', () => {
+test('buildInnerRequest starts a new chat with no conversation metadata', () => {
     const inner = buildInnerRequest('x', 'en', { uuid: 'A' });
-    assert.deepEqual(inner[2], ['', '', '', null, null, null, null, null, null, '']);
+    assert.equal(inner[2], null);
 });
 
 test('buildInnerRequest generates a unique fake context token by default', () => {
@@ -132,6 +132,7 @@ test('generateGeminiImage runs token, request, parse, download and write end to 
     assert.match(requestConfig.url, /StreamGenerate\?/);
     assert.match(requestConfig.url, /f\.sid=sid-1/);
     assert.deepEqual(requestConfig.headers['x-goog-ext-525005358-jspb'].startsWith('['), true);
+    assert.equal(JSON.parse(requestConfig.headers['x-goog-ext-525001261-jspb'])[16], 'sid-1');
     const body = new URLSearchParams(requestConfig.data);
     assert.equal(body.get('at'), 'at-1');
     assert.match(body.get('f.req'), /Generate an image: a blue ceramic mug/);
